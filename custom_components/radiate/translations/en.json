@@ -9,7 +9,7 @@
           "token": "Access token"
         },
         "data_description": {
-          "url": "For example http://radiate.local:8099",
+          "url": "Address and port of the Radiate server, including http://",
           "token": "Leave empty if the server has no token set"
         }
       },
