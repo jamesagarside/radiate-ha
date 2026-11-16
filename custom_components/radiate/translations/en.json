@@ -1,0 +1,75 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Radiate",
+        "description": "Enter the address of your Radiate server. If you installed the Radiate app in Home Assistant, it is found automatically.",
+        "data": {
+          "url": "Server URL",
+          "token": "Access token"
+        },
+        "data_description": {
+          "url": "For example http://radiate.local:8099",
+          "token": "Leave empty if the server has no token set"
+        }
+      },
+      "hassio_confirm": {
+        "title": "Radiate app found",
+        "description": "Add the Radiate app running on this Home Assistant?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the Radiate server. Check the URL and that it is running.",
+      "invalid_auth": "The access token was rejected."
+    },
+    "abort": {
+      "already_configured": "This Radiate house is already set up.",
+      "cannot_connect": "Could not reach the Radiate app."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "boiler_firing": { "name": "Boiler firing" },
+      "fire": { "name": "Fire lit" }
+    },
+    "climate": {
+      "room": { "name": "Heating" }
+    },
+    "sensor": {
+      "temperature": { "name": "Temperature" },
+      "opening_limit": { "name": "Opening limit" },
+      "heating_gain": { "name": "Heating gain" },
+      "loss_rate": { "name": "Loss rate" },
+      "arrival_lag": { "name": "Arrival lag" },
+      "confidence": { "name": "Model confidence" },
+      "boiler_state": {
+        "name": "Boiler state",
+        "state": {
+          "idle": "Idle",
+          "lead": "Opening valves",
+          "firing": "Firing",
+          "rest": "Resting"
+        }
+      },
+      "starts_last_hour": { "name": "Burner starts, last hour" },
+      "predicted_burn": { "name": "Predicted burn" },
+      "outdoor_temperature": { "name": "Outdoor temperature" }
+    }
+  },
+  "services": {
+    "boost_store": {
+      "name": "Boost hot water",
+      "description": "Turn the hot-water store on for a while, outside its schedule.",
+      "fields": {
+        "minutes": { "name": "Minutes", "description": "How long to boost, up to 180 minutes." }
+      }
+    },
+    "set_mode": {
+      "name": "Set heating mode",
+      "description": "Auto follows schedules. Frost holds every room at the frost threshold. Off stops heating but keeps frost protection.",
+      "fields": {
+        "mode": { "name": "Mode", "description": "auto, frost or off." }
+      }
+    }
+  }
+}

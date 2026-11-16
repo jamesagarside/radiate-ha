@@ -1,0 +1,19 @@
+boost_store:
+  fields:
+    minutes:
+      default: 60
+      selector:
+        number:
+          min: 0
+          max: 180
+          unit_of_measurement: min
+set_mode:
+  fields:
+    mode:
+      required: true
+      selector:
+        select:
+          options:
+            - auto
+            - frost
+            - "off"

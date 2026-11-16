@@ -1,0 +1,68 @@
+"""Client for the Radiate server API (docs/spec.md section 8.1).
+
+The integration is a thin client: all control logic lives in the Radiate server,
+which keeps heating running when Home Assistant restarts (ADR-0002).
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+import aiohttp
+
+
+class RadiateError(Exception):
+    """Base error."""
+
+
+class RadiateConnectionError(RadiateError):
+    """Server unreachable or returned an unexpected response."""
+
+
+class RadiateAuthError(RadiateError):
+    """Token rejected."""
+
+
+class RadiateClient:
+    def __init__(self, session: aiohttp.ClientSession, url: str, token: str = "") -> None:
+        self._session = session
+        self._url = url.rstrip("/")
+        self._token = token
+
+    def _headers(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self._token}"} if self._token else {}
+
+    async def _request(self, method: str, path: str, body: dict | None = None) -> Any:
+        try:
+            async with self._session.request(
+                method,
+                f"{self._url}/api/v1/{path}",
+                json=body,
+                headers=self._headers(),
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as resp:
+                if resp.status == 401:
+                    raise RadiateAuthError
+                if resp.status >= 400:
+                    raise RadiateConnectionError(f"{method} {path}: HTTP {resp.status}")
+                return await resp.json()
+        except (aiohttp.ClientError, TimeoutError) as err:
+            raise RadiateConnectionError(str(err)) from err
+
+    async def house(self) -> dict:
+        return await self._request("GET", "house")
+
+    async def state(self) -> dict:
+        return await self._request("GET", "state")
+
+    async def set_setpoint(self, room_id: str, setpoint: float | None) -> None:
+        await self._request("POST", f"rooms/{room_id}/setpoint", {"setpoint": setpoint})
+
+    async def set_fire(self, room_id: str, lit: bool) -> None:
+        await self._request("POST", f"rooms/{room_id}/fire", {"lit": lit})
+
+    async def boost_store(self, minutes: int) -> None:
+        await self._request("POST", "store/boost", {"minutes": minutes})
+
+    async def set_mode(self, mode: str) -> None:
+        await self._request("POST", "mode", {"mode": mode})

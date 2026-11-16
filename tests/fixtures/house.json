@@ -1,0 +1,75 @@
+{
+ "id": "9b8f2f2e-0000-4000-8000-000000000001",
+ "version": "0.1.0.dev0",
+ "driver": "demo",
+ "rooms": [
+  {
+   "id": "bedroom_1",
+   "name": "Bedroom 1",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "bedroom_2",
+   "name": "Bedroom 2",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "bedroom_3",
+   "name": "Bedroom 3",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "bathroom",
+   "name": "Bathroom",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "dining",
+   "name": "Dining room",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "lounge",
+   "name": "Lounge",
+   "role": "normal",
+   "heat_source": "episodic",
+   "controllable": true
+  },
+  {
+   "id": "kitchen",
+   "name": "Kitchen",
+   "role": "normal",
+   "heat_source": "continuous",
+   "controllable": true
+  },
+  {
+   "id": "toilet",
+   "name": "Toilet",
+   "role": "internal_sensor_only",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "stairs",
+   "name": "Stairs",
+   "role": "passive",
+   "heat_source": null,
+   "controllable": false
+  }
+ ],
+ "boiler": {
+  "min_burn_s": 480,
+  "min_off_s": 600,
+  "max_starts_per_hour": 3
+ }
+}
