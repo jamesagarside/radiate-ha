@@ -1,15 +1,28 @@
 """Home Assistant integration tests. Run with the HA test harness:
 
 .venv-ha/bin/pytest tests/ha
+
+The fixtures are `house()` and `describe()` from the demo runtime after about a day,
+with a nozzle rating, an override on Bedroom 1 and the Lounge fire switch on.
 """
 
 import json
 from pathlib import Path
 
 import pytest
+from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.radiate.const import CONF_TOKEN, CONF_URL, DOMAIN
 
 FIXTURES = Path(__file__).parent / "fixtures"
 URL = "http://radiate.test:8099"
+POST_PATHS = (
+    "rooms/bedroom_1/setpoint",
+    "rooms/lounge/fire",
+    "store/boost",
+    "mode",
+)
 
 
 @pytest.fixture(autouse=True)
@@ -27,10 +40,34 @@ def state() -> dict:
     return json.loads((FIXTURES / "state.json").read_text())
 
 
-@pytest.fixture
-def radiate_api(aioclient_mock, house, state):
+def mock_server(aioclient_mock, house: dict, state: dict) -> None:
+    """Register the API on `aioclient_mock`, replacing anything registered before."""
+    aioclient_mock.clear_requests()
     aioclient_mock.get(f"{URL}/api/v1/house", json=house)
     aioclient_mock.get(f"{URL}/api/v1/state", json=state)
-    for path in ("rooms/bedroom_1/setpoint", "store/boost", "mode"):
+    for path in POST_PATHS:
         aioclient_mock.post(f"{URL}/api/v1/{path}", json={"ok": True})
+
+
+@pytest.fixture
+def radiate_api(aioclient_mock, house, state):
+    mock_server(aioclient_mock, house, state)
     return aioclient_mock
+
+
+async def setup_integration(hass: HomeAssistant, house: dict) -> MockConfigEntry:
+    entry = MockConfigEntry(
+        domain=DOMAIN, unique_id=house["id"], data={CONF_URL: URL, CONF_TOKEN: ""}
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return entry
+
+
+def posts(aioclient_mock) -> list[tuple[str, dict]]:
+    """(path below api/v1/, body) for every POST made so far."""
+    prefix = f"{URL}/api/v1/"
+    return [
+        (str(c[1]).removeprefix(prefix), c[2]) for c in aioclient_mock.mock_calls if c[0] == "POST"
+    ]

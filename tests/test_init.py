@@ -3,31 +3,23 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.radiate.const import CONF_TOKEN, CONF_URL, DOMAIN
+from custom_components.radiate.const import CONF_URL, DOMAIN
 
-from .conftest import URL
-
-
-async def _setup(hass: HomeAssistant, house: dict) -> MockConfigEntry:
-    entry = MockConfigEntry(
-        domain=DOMAIN, unique_id=house["id"], data={CONF_URL: URL, CONF_TOKEN: ""}
-    )
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-    return entry
+from .conftest import URL, posts, setup_integration
 
 
 async def test_setup_creates_entities(hass: HomeAssistant, radiate_api, house, state):
-    entry = await _setup(hass, house)
+    entry = await setup_integration(hass, house)
     assert entry.state is ConfigEntryState.LOADED
     ents = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
     domains = {e.domain for e in ents}
-    assert domains == {"climate", "sensor", "binary_sensor"}
+    assert domains == {"climate", "sensor", "binary_sensor", "switch"}
     climates = [e for e in ents if e.domain == "climate"]
     assert len(climates) == 8  # stairs bypass radiator is not controllable
+    # Unique IDs kept from earlier versions.
     fire = [e for e in ents if e.domain == "binary_sensor" and e.unique_id.endswith("lounge_fire")]
     assert len(fire) == 1
+    assert f"{house['id']}_bedroom_1_climate" in {e.unique_id for e in climates}
 
     bed = next(r for r in state["rooms"] if r["id"] == "bedroom_1")
     climate = hass.states.get("climate.bedroom_1")
@@ -37,22 +29,22 @@ async def test_setup_creates_entities(hass: HomeAssistant, radiate_api, house, s
 
 
 async def test_set_temperature_calls_server(hass: HomeAssistant, radiate_api, house):
-    await _setup(hass, house)
+    await setup_integration(hass, house)
     await hass.services.async_call(
         "climate",
         "set_temperature",
         {"entity_id": "climate.bedroom_1", "temperature": 21.5},
         blocking=True,
     )
-    posts = [c for c in radiate_api.mock_calls if c[0] == "POST"]
-    assert posts and posts[-1][2] == {"setpoint": 21.5}
+    # No `until`: the server holds it until the room's next scheduled change.
+    assert posts(radiate_api)[-1] == ("rooms/bedroom_1/setpoint", {"setpoint": 21.5})
 
 
 async def test_services(hass: HomeAssistant, radiate_api, house):
-    await _setup(hass, house)
+    await setup_integration(hass, house)
     await hass.services.async_call(DOMAIN, "boost_store", {"minutes": 30}, blocking=True)
     await hass.services.async_call(DOMAIN, "set_mode", {"mode": "frost"}, blocking=True)
-    bodies = [c[2] for c in radiate_api.mock_calls if c[0] == "POST"]
+    bodies = [body for _, body in posts(radiate_api)]
     assert {"minutes": 30} in bodies and {"mode": "frost"} in bodies
 
 
