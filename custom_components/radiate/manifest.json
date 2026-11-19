@@ -6,7 +6,7 @@
   "dependencies": [],
   "documentation": "https://github.com/jamesagarside/radiate",
   "integration_type": "hub",
-  "iot_class": "local_push",
+  "iot_class": "local_polling",
   "issue_tracker": "https://github.com/jamesagarside/radiate/issues",
   "requirements": [],
   "version": "0.1.0"
