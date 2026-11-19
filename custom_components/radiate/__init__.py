@@ -20,7 +20,7 @@ from .api import RadiateAuthError, RadiateClient, RadiateConnectionError, Radiat
 from .const import CONF_TOKEN, CONF_URL, DOMAIN
 from .coordinator import RadiateCoordinator
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.CLIMATE, Platform.SENSOR]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.CLIMATE, Platform.SENSOR, Platform.SWITCH]
 
 
 @dataclass

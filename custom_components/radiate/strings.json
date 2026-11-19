@@ -30,7 +30,8 @@
   "entity": {
     "binary_sensor": {
       "boiler_firing": { "name": "Boiler firing" },
-      "fire": { "name": "Fire lit" }
+      "fire": { "name": "Fire detected" },
+      "valve_untrusted": { "name": "Stuck valve" }
     },
     "climate": {
       "room": { "name": "Heating" }
@@ -42,6 +43,7 @@
       "loss_rate": { "name": "Loss rate" },
       "arrival_lag": { "name": "Arrival lag" },
       "confidence": { "name": "Model confidence" },
+      "learning": { "name": "Learning" },
       "boiler_state": {
         "name": "Boiler state",
         "state": {
@@ -53,7 +55,34 @@
       },
       "starts_last_hour": { "name": "Burner starts, last hour" },
       "predicted_burn": { "name": "Predicted burn" },
-      "outdoor_temperature": { "name": "Outdoor temperature" }
+      "outdoor_temperature": { "name": "Outdoor temperature" },
+      "short_cycle_extra_off": { "name": "Short-cycle extra off time" },
+      "burner_hours_today": { "name": "Burner hours today" },
+      "relay_starts_today": { "name": "Starts today" },
+      "oil_today": { "name": "Oil used today" },
+      "heat_today": { "name": "Heat delivered today" },
+      "balance_score_yesterday": { "name": "Balance score, yesterday" },
+      "alerts": { "name": "Alerts" }
+    },
+    "switch": {
+      "fire_switch": { "name": "Fire lit" }
+    }
+  },
+  "exceptions": {
+    "duration_needed": {
+      "message": "Give a duration in minutes when the override ends after a duration."
+    },
+    "duration_conflict": {
+      "message": "A duration only applies when the override ends after a duration."
+    }
+  },
+  "selector": {
+    "override_until": {
+      "options": {
+        "next_change": "Next scheduled change",
+        "duration": "After a duration",
+        "cleared": "Until cleared"
+      }
     }
   },
   "services": {
@@ -70,6 +99,25 @@
       "fields": {
         "mode": { "name": "Mode", "description": "auto, frost or off." }
       }
+    },
+    "set_override": {
+      "name": "Set override",
+      "description": "Hold a room at a temperature until its next scheduled change, for a number of minutes, or until you clear it.",
+      "fields": {
+        "temperature": { "name": "Temperature", "description": "Setpoint to hold, 5 to 28 °C." },
+        "until": {
+          "name": "Until",
+          "description": "When the override ends. Leave it empty to end at the next scheduled change, or set a duration."
+        },
+        "duration_min": {
+          "name": "Duration",
+          "description": "How long to hold the setpoint, in minutes, up to 7 days."
+        }
+      }
+    },
+    "clear_override": {
+      "name": "Clear override",
+      "description": "Return a room to its schedule."
     }
   }
 }

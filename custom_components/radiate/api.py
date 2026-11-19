@@ -44,7 +44,8 @@ class RadiateClient:
                 if resp.status == 401:
                     raise RadiateAuthError
                 if resp.status >= 400:
-                    raise RadiateConnectionError(f"{method} {path}: HTTP {resp.status}")
+                    detail = (await resp.text())[:200]
+                    raise RadiateConnectionError(f"{method} {path}: HTTP {resp.status} {detail}")
                 return await resp.json()
         except (aiohttp.ClientError, TimeoutError) as err:
             raise RadiateConnectionError(str(err)) from err
@@ -55,8 +56,23 @@ class RadiateClient:
     async def state(self) -> dict:
         return await self._request("GET", "state")
 
-    async def set_setpoint(self, room_id: str, setpoint: float | None) -> None:
-        await self._request("POST", f"rooms/{room_id}/setpoint", {"setpoint": setpoint})
+    async def set_setpoint(
+        self,
+        room_id: str,
+        setpoint: float | None,
+        until: str | None = None,
+        duration_min: int | None = None,
+    ) -> None:
+        """Override a room's setpoint; `None` clears the override.
+
+        Without `until` or `duration_min` the server holds it until the next schedule change.
+        """
+        body: dict[str, Any] = {"setpoint": setpoint}
+        if until is not None:
+            body["until"] = until
+        if duration_min is not None:
+            body["duration_min"] = duration_min
+        await self._request("POST", f"rooms/{room_id}/setpoint", body)
 
     async def set_fire(self, room_id: str, lit: bool) -> None:
         await self._request("POST", f"rooms/{room_id}/fire", {"lit": lit})
