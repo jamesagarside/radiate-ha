@@ -8,14 +8,15 @@ import pytest
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import slugify
 from homeassistant.util.yaml import load_yaml
 
 from custom_components.radiate.const import DOMAIN
+from custom_components.radiate.select import DEMAND_MODES
 
-from .conftest import mock_server, posts, setup_integration
+from .conftest import URL, mock_server, posts, setup_integration
 
 INTEGRATION = Path(__file__).parents[2] / "custom_components" / DOMAIN
 
@@ -27,16 +28,18 @@ HOUSE_SENSORS = {
     "sensor.radiate_balance_score_yesterday": "balance_score_yesterday",
     "sensor.radiate_short_cycle_extra_off_time": "short_cycle_extra_off",
     "sensor.radiate_alerts": "alerts",
+    "sensor.radiate_pooled_demand": "pooled_demand",
+    "select.radiate_demand_mode": "demand_mode",
 }
 
 
 def _old_server(state: dict) -> dict:
-    """The state shape before accounting, overrides, valve checks and alert codes."""
+    """The state shape before accounting, overrides, valve checks, alert codes and settings."""
     old = copy.deepcopy(state)
-    for key in ("accounting", "alert_details"):
+    for key in ("accounting", "alert_details", "settings"):
         old.pop(key)
-    old["boiler"].pop("short_cycle")
-    old["boiler"].pop("min_off_s")
+    for key in ("short_cycle", "min_off_s", "pooled_demand_min"):
+        old["boiler"].pop(key)
     for room in old["rooms"]:
         for key in ("override", "fire_switch", "valve"):
             room.pop(key, None)
@@ -137,6 +140,67 @@ async def test_alerts_sensor(hass: HomeAssistant, aioclient_mock, house, state):
     alerts = hass.states.get("sensor.radiate_alerts")
     assert alerts.state == "1"
     assert alerts.attributes["alerts"] == state["alert_details"]
+
+
+async def test_demand_mode_select(hass: HomeAssistant, aioclient_mock, house, state):
+    mock_server(aioclient_mock, house, state)
+    entry = await setup_integration(hass, house)
+    select = hass.states.get("select.radiate_demand_mode")
+    assert select.state == "eco"
+    assert select.attributes["options"] == ["eco", "comfort"]
+    assert select.attributes["default_mode"] == "eco"
+    entity = er.async_get(hass).async_get("select.radiate_demand_mode")
+    assert entity.unique_id == f"{house['id']}_house_demand_mode"
+    assert entity.entity_category is None  # a control people use, not a diagnostic
+
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.radiate_demand_mode", "option": "comfort"},
+        blocking=True,
+    )
+    assert posts(aioclient_mock)[-1] == ("settings", {"demand_mode": "comfort"})
+
+    # Choosing the configured default follows the configuration file again.
+    state["settings"]["demand_mode"] = "comfort"
+    mock_server(aioclient_mock, house, state)
+    await _refresh(hass, entry)
+    assert hass.states.get("select.radiate_demand_mode").state == "comfort"
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.radiate_demand_mode", "option": "eco"},
+        blocking=True,
+    )
+    assert posts(aioclient_mock)[-1] == ("settings", {"demand_mode": None})
+
+
+async def test_demand_mode_select_reports_server_errors(
+    hass: HomeAssistant, aioclient_mock, house, state
+):
+    mock_server(aioclient_mock, house, state)
+    await setup_integration(hass, house)
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(f"{URL}/api/v1/state", json=state)
+    aioclient_mock.post(f"{URL}/api/v1/settings", status=400, text="bad demand_mode")
+    with pytest.raises(HomeAssistantError, match="HTTP 400"):
+        await hass.services.async_call(
+            "select",
+            "select_option",
+            {"entity_id": "select.radiate_demand_mode", "option": "comfort"},
+            blocking=True,
+        )
+
+
+async def test_pooled_demand_sensor(hass: HomeAssistant, radiate_api, house, state):
+    await setup_integration(hass, house)
+    pooled = hass.states.get("sensor.radiate_pooled_demand")
+    assert float(pooled.state) == state["boiler"]["pooled_demand_min"]
+    assert pooled.attributes["unit_of_measurement"] == "min"
+    assert pooled.attributes["device_class"] == SensorDeviceClass.DURATION
+    assert pooled.attributes["state_class"] == SensorStateClass.MEASUREMENT
+    entity = er.async_get(hass).async_get("sensor.radiate_pooled_demand")
+    assert entity.unique_id == f"{house['id']}_house_pooled_demand"
 
 
 async def test_stuck_valve_binary_sensor(hass: HomeAssistant, aioclient_mock, house, state):
@@ -268,6 +332,8 @@ def test_services_are_declared_and_translated():
         assert set(fields) == set(strings["services"][name].get("fields", {})), name
     until = services["set_override"]["fields"]["until"]["selector"]["select"]
     assert set(until["options"]) == set(strings["selector"][until["translation_key"]]["options"])
+    demand = strings["entity"]["select"]["demand_mode"]["state"]
+    assert list(demand) == DEMAND_MODES
 
 
 async def test_older_server_without_new_keys(hass: HomeAssistant, aioclient_mock, house, state):
