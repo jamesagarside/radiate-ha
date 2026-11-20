@@ -86,3 +86,16 @@ class RadiateClient:
     async def set_demand_mode(self, mode: str | None) -> None:
         """`eco` or `comfort`; `None` follows `boiler.demand_mode` in the server's config."""
         await self._request("POST", "settings", {"demand_mode": mode})
+
+    async def set_away(self, person_id: str, until: str | None) -> None:
+        """Away until an ISO 8601 date and time; `None` clears it."""
+        await self._request("POST", f"people/{person_id}/away", {"until": until})
+
+    async def report_presence(
+        self, person_id: str, state: str | None, since: str | None = None
+    ) -> None:
+        """Presence from a `person` entity: `home`, `not_home`, or `None` to forget it."""
+        body: dict[str, Any] = {"state": state}
+        if since is not None:
+            body["since"] = since
+        await self._request("POST", f"people/{person_id}/presence", body)

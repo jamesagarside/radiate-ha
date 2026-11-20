@@ -27,11 +27,26 @@
       "cannot_connect": "Could not reach the Radiate app."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "People and presence",
+        "description": "Pick the Home Assistant person for each Radiate person: {people}. Radiate counts a person as away once they have been out for its presence delay. Leave a person empty to set their away by hand."
+      }
+    },
+    "abort": {
+      "cannot_connect": "Could not reach the Radiate server. Check that it is running.",
+      "no_people": "The Radiate server has no people. Add a household section to the house file first."
+    }
+  },
   "entity": {
     "binary_sensor": {
       "boiler_firing": { "name": "Boiler firing" },
+      "store": { "name": "Hot-water store" },
+      "store_boost": { "name": "Hot-water boost" },
       "fire": { "name": "Fire detected" },
-      "valve_untrusted": { "name": "Stuck valve" }
+      "valve_untrusted": { "name": "Stuck valve" },
+      "away": { "name": "{person} away" }
     },
     "climate": {
       "room": { "name": "Heating" }
@@ -42,6 +57,14 @@
         "state": {
           "eco": "Eco",
           "comfort": "Comfort"
+        }
+      },
+      "mode": {
+        "name": "Heating mode",
+        "state": {
+          "auto": "Auto",
+          "frost": "Frost",
+          "off": "Off"
         }
       }
     },
@@ -84,6 +107,9 @@
     },
     "duration_conflict": {
       "message": "A duration only applies when the override ends after a duration."
+    },
+    "unknown_person": {
+      "message": "Radiate has no person {person}. Use a person ID from the house file, or a person entity mapped in the Radiate options."
     }
   },
   "selector": {
@@ -128,6 +154,30 @@
     "clear_override": {
       "name": "Clear override",
       "description": "Return a room to its schedule."
+    },
+    "set_away": {
+      "name": "Set away",
+      "description": "Count a person as away until a date and time. Their rooms follow the people at home. If everyone is away, the house keeps frost protection until someone is due back.",
+      "fields": {
+        "person": {
+          "name": "Person",
+          "description": "Radiate person ID, or their mapped person entity."
+        },
+        "until": {
+          "name": "Until",
+          "description": "When they are back. Their rooms warm up shortly before."
+        }
+      }
+    },
+    "clear_away": {
+      "name": "Clear away",
+      "description": "Count a person as home again.",
+      "fields": {
+        "person": {
+          "name": "Person",
+          "description": "Radiate person ID, or their mapped person entity."
+        }
+      }
     }
   }
 }

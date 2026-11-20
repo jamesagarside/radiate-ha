@@ -1,4 +1,4 @@
-"""Demand mode select: eco (fewer, longer burns) or comfort (every room held at its target)."""
+"""House-wide selects: the heating mode (auto, frost, off) and the demand mode (eco, comfort)."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from . import RadiateConfigEntry
 from .api import RadiateError
 from .entity import RadiateEntity
 
+MODES = ["auto", "frost", "off"]
 DEMAND_MODES = ["eco", "comfort"]
 
 
@@ -27,9 +28,39 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data.coordinator
+    entities: list[SelectEntity] = []
+    if "mode" in coordinator.data:
+        entities.append(HeatingMode(coordinator))
     # Servers before runtime settings cannot change the demand mode.
     if "demand_mode" in _settings(coordinator.data):
-        async_add_entities([DemandModeSelect(coordinator)])
+        entities.append(DemandModeSelect(coordinator))
+    async_add_entities(entities)
+
+
+class HeatingMode(RadiateEntity, SelectEntity):
+    """Shows `mode` from the server and posts `mode`, as the `radiate.set_mode` service does."""
+
+    _attr_translation_key = "mode"
+    _attr_options = MODES
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "mode")
+
+    @property
+    def available(self) -> bool:
+        return super().available and "mode" in self.coordinator.data
+
+    @property
+    def current_option(self) -> str | None:
+        mode = self.coordinator.data["mode"]
+        return mode if mode in MODES else None
+
+    async def async_select_option(self, option: str) -> None:
+        try:
+            await self.coordinator.client.set_mode(option)
+        except RadiateError as err:
+            raise HomeAssistantError(f"Radiate: {err}") from err
+        await self.coordinator.async_request_refresh()
 
 
 class DemandModeSelect(RadiateEntity, SelectEntity):

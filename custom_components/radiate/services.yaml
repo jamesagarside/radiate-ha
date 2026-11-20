@@ -50,3 +50,21 @@ clear_override:
     entity:
       integration: radiate
       domain: climate
+set_away:
+  fields:
+    person:
+      required: true
+      example: early_riser
+      selector:
+        text:
+    until:
+      required: true
+      selector:
+        datetime:
+clear_away:
+  fields:
+    person:
+      required: true
+      example: early_riser
+      selector:
+        text:

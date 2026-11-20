@@ -19,6 +19,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import RadiateAuthError, RadiateClient, RadiateConnectionError, RadiateError
 from .const import CONF_TOKEN, CONF_URL, DOMAIN
 from .coordinator import RadiateCoordinator
+from .presence import async_register_away_services, async_setup_presence
 
 PLATFORMS = [
     Platform.BINARY_SENSOR,
@@ -54,11 +55,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: RadiateConfigEntry) -> b
     entry.runtime_data = RadiateData(client, coordinator)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     _register_services(hass)
+    async_register_away_services(hass, lambda: _entries(hass))
+    await async_setup_presence(hass, entry)
+    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
+
+
+async def _async_options_updated(hass: HomeAssistant, entry: RadiateConfigEntry) -> None:
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: RadiateConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+def _entries(hass: HomeAssistant) -> list[RadiateConfigEntry]:
+    return [
+        e
+        for e in hass.config_entries.async_loaded_entries(DOMAIN)
+        if isinstance(getattr(e, "runtime_data", None), RadiateData)
+    ]
 
 
 def _clients(hass: HomeAssistant) -> list[RadiateData]:
