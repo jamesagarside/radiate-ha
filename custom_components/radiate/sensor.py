@@ -151,6 +151,19 @@ HOUSE_SENSORS = (
         native_unit_of_measurement=UnitOfTime.MINUTES,
         value=lambda s: s["boiler"]["predicted_burn_min"],
     ),
+    # Minutes of full radiator output the calling rooms need between them (spec 5.3).
+    # In eco a room on its own waits until this is worth a burn.
+    RadiateSensorDescription(
+        key="pooled_demand",
+        translation_key="pooled_demand",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        suggested_display_precision=0,
+        exists=lambda s: "pooled_demand_min" in s["boiler"],
+        value=lambda s: s["boiler"]["pooled_demand_min"],
+    ),
     RadiateSensorDescription(
         key="outdoor_temperature",
         translation_key="outdoor_temperature",

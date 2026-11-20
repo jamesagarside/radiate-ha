@@ -13,7 +13,7 @@ async def test_setup_creates_entities(hass: HomeAssistant, radiate_api, house, s
     assert entry.state is ConfigEntryState.LOADED
     ents = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
     domains = {e.domain for e in ents}
-    assert domains == {"climate", "sensor", "binary_sensor", "switch"}
+    assert domains == {"climate", "select", "sensor", "binary_sensor", "switch"}
     climates = [e for e in ents if e.domain == "climate"]
     assert len(climates) == 8  # stairs bypass radiator is not controllable
     # Unique IDs kept from earlier versions.

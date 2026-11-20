@@ -82,3 +82,7 @@ class RadiateClient:
 
     async def set_mode(self, mode: str) -> None:
         await self._request("POST", "mode", {"mode": mode})
+
+    async def set_demand_mode(self, mode: str | None) -> None:
+        """`eco` or `comfort`; `None` follows `boiler.demand_mode` in the server's config."""
+        await self._request("POST", "settings", {"demand_mode": mode})

@@ -36,6 +36,15 @@
     "climate": {
       "room": { "name": "Heating" }
     },
+    "select": {
+      "demand_mode": {
+        "name": "Demand mode",
+        "state": {
+          "eco": "Eco",
+          "comfort": "Comfort"
+        }
+      }
+    },
     "sensor": {
       "temperature": { "name": "Temperature" },
       "opening_limit": { "name": "Opening limit" },
@@ -55,6 +64,7 @@
       },
       "starts_last_hour": { "name": "Burner starts, last hour" },
       "predicted_burn": { "name": "Predicted burn" },
+      "pooled_demand": { "name": "Pooled demand" },
       "outdoor_temperature": { "name": "Outdoor temperature" },
       "short_cycle_extra_off": { "name": "Short-cycle extra off time" },
       "burner_hours_today": { "name": "Burner hours today" },

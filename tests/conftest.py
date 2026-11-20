@@ -22,6 +22,7 @@ POST_PATHS = (
     "rooms/lounge/fire",
     "store/boost",
     "mode",
+    "settings",
 )
 
 
