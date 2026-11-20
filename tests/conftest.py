@@ -2,7 +2,8 @@
 
 The fixtures come from `scripts/ha_fixtures.py` in the radiate repository: the
 `/api/v1/house` and `/api/v1/state` responses of the demo runtime after about two days,
-with a nozzle rating, an override on Bedroom 1 and the Lounge fire switch on.
+with a nozzle rating, an override on Bedroom 1 and the Lounge fire switch on, and
+`house_people.json`, `/api/v1/house` for the example household with one person linked.
 """
 
 import json
@@ -22,6 +23,7 @@ POST_PATHS = (
     "store/boost",
     "mode",
     "settings",
+    "ha/persons",
 )
 
 
@@ -33,6 +35,13 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 @pytest.fixture
 def house() -> dict:
     return json.loads((FIXTURES / "house.json").read_text())
+
+
+@pytest.fixture
+def house_people() -> dict:
+    """`/api/v1/house` for a household whose `home_worker` is linked to
+    `person.home_worker` in Radiate's setup wizard."""
+    return json.loads((FIXTURES / "house_people.json").read_text())
 
 
 @pytest.fixture
@@ -65,9 +74,14 @@ async def setup_integration(hass: HomeAssistant, house: dict) -> MockConfigEntry
     return entry
 
 
-def posts(aioclient_mock) -> list[tuple[str, dict]]:
-    """(path below api/v1/, body) for every POST made so far."""
+def posts(aioclient_mock, persons: bool = False) -> list[tuple[str, dict]]:
+    """(path below api/v1/, body) for every POST made so far.
+
+    The report of Home Assistant's person entities (`ha/persons`), sent at setup and
+    with every heartbeat, is left out unless `persons` is true.
+    """
     prefix = f"{URL}/api/v1/"
-    return [
+    calls = [
         (str(c[1]).removeprefix(prefix), c[2]) for c in aioclient_mock.mock_calls if c[0] == "POST"
     ]
+    return [c for c in calls if persons or c[0] != "ha/persons"]

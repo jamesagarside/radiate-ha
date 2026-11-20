@@ -1,7 +1,9 @@
 """Options: map each Radiate person to a Home Assistant `person` entity.
 
-People come from the server's household (`GET /api/v1/house`). A mapped person's
-presence is reported to the server as it changes; see `presence.py`.
+People come from the server's household (`GET /api/v1/house`), which can also link
+them in Radiate's setup wizard (`ha_person`). A mapping here wins over that link; a
+person left empty here uses it. A mapped person's presence is reported to the server
+as it changes; see `presence.py`.
 """
 
 from __future__ import annotations
@@ -15,6 +17,13 @@ from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
 
 from .api import RadiateAuthError, RadiateClient, RadiateConnectionError
 from .const import CONF_PEOPLE, CONF_TOKEN, CONF_URL
+
+
+def _describe(person: dict) -> str:
+    """`early_riser (Early riser)`, with the link from Radiate's wizard when it has one."""
+    link = person.get("ha_person")
+    extra = f", linked in Radiate to {link}" if link else ""
+    return f"{person['id']} ({person['name']}{extra})"
 
 
 class RadiateOptionsFlow(OptionsFlow):
@@ -53,7 +62,7 @@ class RadiateOptionsFlow(OptionsFlow):
                 for p in self._people
             }
         )
-        names = ", ".join(f"{p['id']} ({p['name']})" for p in self._people)
+        names = ", ".join(_describe(p) for p in self._people)
         return self.async_show_form(
             step_id="init", data_schema=schema, description_placeholders={"people": names}
         )

@@ -31,12 +31,12 @@
     "step": {
       "init": {
         "title": "People and presence",
-        "description": "Pick the Home Assistant person for each Radiate person: {people}. Radiate counts a person as away once they have been out for its presence delay. Leave a person empty to set their away by hand."
+        "description": "Pick the Home Assistant person for each Radiate person: {people}. You can also link people in the household setup in Radiate's web UI. A person picked here takes priority over that link. Leave a person empty to use the link from Radiate, or to set their away by hand if they have none. Radiate counts a person as away once they have been out for its presence delay."
       }
     },
     "abort": {
       "cannot_connect": "Could not reach the Radiate server. Check that it is running.",
-      "no_people": "The Radiate server has no people. Add a household section to the house file first."
+      "no_people": "The Radiate server has no people. Set up the household in Radiate's web UI or the house file first."
     }
   },
   "entity": {
@@ -109,7 +109,7 @@
       "message": "A duration only applies when the override ends after a duration."
     },
     "unknown_person": {
-      "message": "Radiate has no person {person}. Use a person ID from the house file, or a person entity mapped in the Radiate options."
+      "message": "Radiate has no person {person}. Use a Radiate person ID, or the person entity linked to them."
     }
   },
   "selector": {
