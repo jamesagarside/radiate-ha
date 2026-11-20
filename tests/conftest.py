@@ -2,7 +2,7 @@
 
 .venv-ha/bin/pytest tests/ha
 
-The fixtures are `house()` and `describe()` from the demo runtime after about a day,
+The fixtures are `house()` and `describe()` from the demo runtime after about two days,
 with a nozzle rating, an override on Bedroom 1 and the Lounge fire switch on.
 """
 
