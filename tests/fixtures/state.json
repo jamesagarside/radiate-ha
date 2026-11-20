@@ -2,6 +2,14 @@
  "now": 196260.0,
  "minute_of_day": 391,
  "mode": "auto",
+ "away": {
+  "everyone": false,
+  "frost": false,
+  "presence_delay_min": null,
+  "return": null,
+  "today": null,
+  "people": []
+ },
  "outdoor": 2.2,
  "boiler": {
   "state": "firing",

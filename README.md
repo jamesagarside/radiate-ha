@@ -44,6 +44,9 @@ Rooms Radiate can't control, such as a bypass radiator, get a temperature sensor
 
 For the house:
 
+- Heating mode (`select.radiate_heating_mode`): **Auto**, **Frost** or **Off**. Choosing an option sets the mode, as `radiate.set_mode` does.
+- Hot-water store (`binary_sensor.radiate_hot_water_store`): on while the store relay is on, in a store window or during a boost. The relay enables the store; the boiler's own thermostat decides when it heats.
+- Hot-water boost (`binary_sensor.radiate_hot_water_boost`): on while a boost from `radiate.boost_store` runs.
 - A Demand mode select (`select.radiate_demand_mode`, unique ID `<house id>_house_demand_mode`) with the options **Eco** and **Comfort**. Eco, the default, runs fewer and longer burns: a room on its own can wait until other rooms need heat too, so they share a burn. Comfort fires the boiler as soon as any room is noticeably cold. The change applies from the server's next tick and survives a restart. Choosing the mode set in the server's configuration file (shown in the `default_mode` attribute) makes the server follow that file again.
 - Pooled demand (`sensor.radiate_pooled_demand`, unique ID `<house id>_house_pooled_demand`), a diagnostic sensor in minutes: how long the calling rooms need the radiators at full output between them.
 - Boiler state, boiler firing, starts in the last hour, predicted burn and outdoor temperature.
@@ -52,12 +55,22 @@ For the house:
 - Balance score for yesterday, 0 to 100. It's higher when rooms reached their setpoints closer together.
 - Alerts: the number of current alerts, with each one's code, message and room in the `alerts` attribute.
 
+For each person in the server's household (the `household` section of the house file, or the household set up in Radiate's web UI):
+
+- An away binary sensor, for example `binary_sensor.radiate_early_riser_away`. It's on while Radiate counts the person as away. Its attributes give the reason (`away_until` or `presence`), when they're due back (`away_until`), the presence Radiate last had (`presence`, `presence_since`) and whether it has gone stale (`presence_stale`).
+
+### Presence
+
+To let Home Assistant presence drive away, map each Radiate person to a `person` entity: go to **Settings** > **Devices & services** > **Radiate** > **Configure**. The integration then reports each mapped person's state to the server when it changes, and again every 15 minutes so the server knows Home Assistant is still reporting. `home` counts as home and any other state, such as `not_home` or a zone name, counts as not home. `unknown` and `unavailable` aren't reported, so they never make anyone away. The server decides when not home counts as away, after its presence delay. If you remove a mapping, the integration tells the server to forget that person's presence.
+
 ## Services
 
 - `radiate.boost_store`: `minutes`, 0 to 180, default 60.
 - `radiate.set_mode`: `auto`, `frost` or `off`.
 - `radiate.set_override`: target one or more Radiate climate entities with a `temperature`. By default the override ends at the room's next scheduled change. Set `duration_min` (1 to 10080) to hold it for that long, or `until: cleared` to hold it until you clear it.
 - `radiate.clear_override`: returns the targeted rooms to their schedules.
+- `radiate.set_away`: `person` (a Radiate person ID, or their mapped `person` entity) and `until` (a date and time). The person counts as away until then, and Radiate warms their rooms in time for their return.
+- `radiate.clear_away`: `person`. Counts them as home again.
 
 ## Development
 

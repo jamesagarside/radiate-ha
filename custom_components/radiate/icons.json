@@ -1,0 +1,42 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "store": {
+        "default": "mdi:water-boiler-off",
+        "state": {
+          "on": "mdi:water-boiler"
+        }
+      },
+      "store_boost": {
+        "default": "mdi:water-boiler-off",
+        "state": {
+          "on": "mdi:water-boiler-alert"
+        }
+      }
+    },
+    "select": {
+      "mode": {
+        "default": "mdi:thermostat",
+        "state": {
+          "auto": "mdi:calendar-clock",
+          "frost": "mdi:snowflake",
+          "off": "mdi:power"
+        }
+      }
+    }
+  },
+  "services": {
+    "boost_store": {
+      "service": "mdi:water-boiler"
+    },
+    "set_mode": {
+      "service": "mdi:thermostat"
+    },
+    "set_override": {
+      "service": "mdi:thermometer-lines"
+    },
+    "clear_override": {
+      "service": "mdi:calendar-sync"
+    }
+  }
+}

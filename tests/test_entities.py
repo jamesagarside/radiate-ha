@@ -325,7 +325,14 @@ def test_services_are_declared_and_translated():
     services = load_yaml(INTEGRATION / "services.yaml")
     strings = json.loads((INTEGRATION / "strings.json").read_text())
     assert json.loads((INTEGRATION / "translations" / "en.json").read_text()) == strings
-    assert set(services) == {"boost_store", "set_mode", "set_override", "clear_override"}
+    assert set(services) == {
+        "boost_store",
+        "set_mode",
+        "set_override",
+        "clear_override",
+        "set_away",
+        "clear_away",
+    }
     assert set(services) == set(strings["services"])
     for name, service in services.items():
         fields = (service or {}).get("fields", {})

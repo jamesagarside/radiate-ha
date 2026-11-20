@@ -5,12 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.hassio import HassioServiceInfo
 
 from .api import RadiateAuthError, RadiateClient, RadiateConnectionError
 from .const import CONF_TOKEN, CONF_URL, DEFAULT_URL, DOMAIN
+from .options_flow import RadiateOptionsFlow
 
 
 class RadiateConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -18,6 +20,11 @@ class RadiateConfigFlow(ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._discovered: dict[str, Any] = {}
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> RadiateOptionsFlow:
+        return RadiateOptionsFlow()
 
     async def _validate(self, url: str, token: str) -> dict:
         client = RadiateClient(async_get_clientsession(self.hass), url, token)
