@@ -57,11 +57,18 @@ For the house:
 
 For each person in the server's household (the `household` section of the house file, or the household set up in Radiate's web UI):
 
-- An away binary sensor, for example `binary_sensor.radiate_early_riser_away`. It's on while Radiate counts the person as away. Its attributes give the reason (`away_until` or `presence`), when they're due back (`away_until`), the presence Radiate last had (`presence`, `presence_since`) and whether it has gone stale (`presence_stale`).
+- An away binary sensor, for example `binary_sensor.radiate_early_riser_away`. It's on while Radiate counts the person as away. Its attributes give the `person` entity linked to them (`person_entity`), the reason (`away_until` or `presence`), when they're due back (`away_until`), the presence Radiate last had (`presence`, `presence_since`) and whether it has gone stale (`presence_stale`).
 
 ### Presence
 
-To let Home Assistant presence drive away, map each Radiate person to a `person` entity: go to **Settings** > **Devices & services** > **Radiate** > **Configure**. The integration then reports each mapped person's state to the server when it changes, and again every 15 minutes so the server knows Home Assistant is still reporting. `home` counts as home and any other state, such as `not_home` or a zone name, counts as not home. `unknown` and `unavailable` aren't reported, so they never make anyone away. The server decides when not home counts as away, after its presence delay. If you remove a mapping, the integration tells the server to forget that person's presence.
+To let Home Assistant presence drive away, link each Radiate person to a `person` entity. You can do it in two places:
+
+- In Radiate's web UI: **Home Assistant person** on the People step of the household setup. The integration tells Radiate which `person` entities Home Assistant has when it starts and every 15 minutes, so the setup can list them.
+- In Home Assistant: go to **Settings** > **Devices & services** > **Radiate** > **Configure**.
+
+A link in the integration's options takes priority. Leave a person empty there to use the link from Radiate's setup. The integration checks Radiate's people every 15 minutes and reloads when they or their links change.
+
+The integration reports each linked person's state to the server when it changes, and again every 15 minutes so the server knows Home Assistant is still reporting. `home` counts as home and any other state, such as `not_home` or a zone name, counts as not home. `unknown` and `unavailable` aren't reported, so they never make anyone away. The server decides when not home counts as away, after its presence delay. If you remove a person's link, the integration tells the server to forget that person's presence.
 
 ## Services
 
@@ -69,7 +76,7 @@ To let Home Assistant presence drive away, map each Radiate person to a `person`
 - `radiate.set_mode`: `auto`, `frost` or `off`.
 - `radiate.set_override`: target one or more Radiate climate entities with a `temperature`. By default the override ends at the room's next scheduled change. Set `duration_min` (1 to 10080) to hold it for that long, or `until: cleared` to hold it until you clear it.
 - `radiate.clear_override`: returns the targeted rooms to their schedules.
-- `radiate.set_away`: `person` (a Radiate person ID, or their mapped `person` entity) and `until` (a date and time). The person counts as away until then, and Radiate warms their rooms in time for their return.
+- `radiate.set_away`: `person` (a Radiate person ID, or their linked `person` entity) and `until` (a date and time). The person counts as away until then, and Radiate warms their rooms in time for their return.
 - `radiate.clear_away`: `person`. Counts them as home again.
 
 ## Development
