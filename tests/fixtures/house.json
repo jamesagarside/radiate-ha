@@ -71,5 +71,7 @@
   "min_burn_s": 480,
   "min_off_s": 600,
   "max_starts_per_hour": 3
- }
+ },
+ "people": [],
+ "household": null
 }
