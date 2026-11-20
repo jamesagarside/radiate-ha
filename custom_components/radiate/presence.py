@@ -1,12 +1,18 @@
 """Away: presence from Home Assistant `person` entities, away entities and services.
 
-The options flow maps each Radiate person to a `person` entity. This module reports
-those entities' states to the server as they change: `home` is home, any other state
-(`not_home` or a zone name) is not home, and `unknown` or `unavailable` are not
-reported, so they never count as away. Every 15 minutes it reports each known state
-again (a heartbeat), so the server can treat presence that stops arriving as unknown.
-The server decides who counts as away (with its presence delay and stale limit) and what
-that does to the heating; nothing here makes that decision.
+Each Radiate person can be linked to a `person` entity in two places: the options flow
+here, or Radiate's own setup wizard (`ha_person` in `/house`). A link in the options
+wins; otherwise the server's is used. This module reports the linked entities' states
+to the server as they change: `home` is home, any other state (`not_home` or a zone
+name) is not home, and `unknown` or `unavailable` are not reported, so they never count
+as away. Every 15 minutes it reports each known state again (a heartbeat), so the server
+can treat presence that stops arriving as unknown.
+
+At setup and with each heartbeat it also tells the server which `person` entities exist,
+so the setup wizard can offer them, and reloads the entry when the server's people or
+their links have changed. The server decides who counts as away (with its presence
+delay and stale limit) and what that does to the heating; nothing here makes that
+decision.
 """
 
 from __future__ import annotations
@@ -38,6 +44,8 @@ SET_AWAY_SCHEMA = vol.Schema(
     {vol.Required("person"): cv.string, vol.Required("until"): cv.datetime}
 )
 CLEAR_AWAY_SCHEMA = vol.Schema({vol.Required("person"): cv.string})
+# Read from the state machine only, so no dependency on the person integration.
+PERSON_DOMAIN = "person"
 
 
 def presence_of(state: State | None) -> str | None:
@@ -53,16 +61,45 @@ def people(entry) -> list[dict]:
 
 
 def mapping(entry) -> dict[str, str]:
-    """Radiate person id to `person` entity id, for people the server still has."""
-    known = {p["id"] for p in people(entry)}
-    chosen = entry.options.get(CONF_PEOPLE) or {}
-    return {pid: eid for pid, eid in chosen.items() if pid in known and eid}
+    """Radiate person id to `person` entity id, for people the server still has.
+
+    A mapping in the options wins; otherwise the link set in Radiate's setup wizard.
+    """
+    options = entry.options.get(CONF_PEOPLE) or {}
+    effective = {}
+    for p in people(entry):
+        entity_id = options.get(p["id"]) or p.get("ha_person")
+        if entity_id:
+            effective[p["id"]] = entity_id
+    return effective
+
+
+def ha_persons(hass: HomeAssistant) -> list[dict[str, str]]:
+    """Every `person` entity, with its friendly name, for the server's setup wizard."""
+    return [
+        {"entity_id": s.entity_id, "name": s.name}
+        for s in sorted(hass.states.async_all(PERSON_DOMAIN), key=lambda s: s.entity_id)
+    ]
+
+
+def _links(house: dict) -> list[tuple]:
+    """The server's people and their links, to notice a change made in its wizard."""
+    return [(p["id"], p.get("name"), p.get("ha_person")) for p in house.get("people") or []]
+
+
+async def _report_persons(hass: HomeAssistant, client) -> None:
+    try:
+        await client.report_ha_persons(ha_persons(hass))
+    except RadiateError as err:
+        # A server from before the setup wizard could link people does not have the route.
+        _LOGGER.debug("Radiate: could not report person entities: %s", err)
 
 
 async def async_setup_presence(hass: HomeAssistant, entry) -> None:
-    """Report mapped people's presence now and whenever their `person` entity changes."""
+    """Report linked people's presence now and whenever their `person` entity changes."""
     data = entry.runtime_data
     chosen = mapping(entry)
+    await _report_persons(hass, data.client)
 
     async def report(
         person_id: str, state: str | None, since: datetime | None, refresh: bool = True
@@ -87,8 +124,6 @@ async def async_setup_presence(hass: HomeAssistant, entry) -> None:
         if value is not None:
             await report(pid, value, state.last_changed)
 
-    if not chosen:
-        return
     by_entity: dict[str, list[str]] = {}
     for pid, entity_id in chosen.items():
         by_entity.setdefault(entity_id, []).append(pid)
@@ -102,7 +137,8 @@ async def async_setup_presence(hass: HomeAssistant, entry) -> None:
         for pid in by_entity.get(event.data["entity_id"], []):
             entry.async_create_task(hass, report(pid, value, new.last_changed))
 
-    entry.async_on_unload(async_track_state_change_event(hass, list(by_entity), changed))
+    if by_entity:
+        entry.async_on_unload(async_track_state_change_event(hass, list(by_entity), changed))
 
     async def heartbeat(_now: datetime) -> None:
         # The same state and change time again: nothing changes on the server except
@@ -112,6 +148,15 @@ async def async_setup_presence(hass: HomeAssistant, entry) -> None:
             value = presence_of(state)
             if value is not None:
                 await report(pid, value, state.last_changed, refresh=False)
+        await _report_persons(hass, data.client)
+        # People or links changed in Radiate's setup wizard: set up again with them.
+        try:
+            house = await data.client.house()
+        except RadiateError as err:
+            _LOGGER.debug("Radiate: could not read the house: %s", err)
+            return
+        if _links(house) != _links(data.coordinator.house):
+            hass.config_entries.async_schedule_reload(entry.entry_id)
 
     entry.async_on_unload(
         async_track_time_interval(hass, heartbeat, timedelta(minutes=PRESENCE_HEARTBEAT_MIN))
@@ -195,6 +240,8 @@ class PersonAway(RadiateEntity, BinarySensorEntity):
         presence = p.get("presence") or {}
         return {
             "person_id": self._person_id,
+            # The `person` entity whose presence is reported for them, or None.
+            "person_entity": mapping(self.coordinator.config_entry).get(self._person_id),
             "reason": p.get("reason"),
             "away_until": p.get("until"),
             "presence": presence.get("state"),

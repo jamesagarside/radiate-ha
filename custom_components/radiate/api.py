@@ -99,3 +99,10 @@ class RadiateClient:
         if since is not None:
             body["since"] = since
         await self._request("POST", f"people/{person_id}/presence", body)
+
+    async def report_ha_persons(self, persons: list[dict[str, str]]) -> None:
+        """The `person` entities Home Assistant has, `[{"entity_id", "name"}]`.
+
+        The server offers them in its setup wizard, to link Radiate people to.
+        """
+        await self._request("POST", "ha/persons", {"persons": persons})
