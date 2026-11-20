@@ -1,0 +1,444 @@
+{
+ "id": "9b8f2f2e-0000-4000-8000-000000000001",
+ "version": "0.1.0.dev0",
+ "driver": "demo",
+ "rooms": [
+  {
+   "id": "bedroom_1",
+   "name": "Bedroom 1",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "bedroom_2",
+   "name": "Bedroom 2",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "bedroom_3",
+   "name": "Bedroom 3",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "bathroom",
+   "name": "Bathroom",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "dining",
+   "name": "Dining room",
+   "role": "normal",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "lounge",
+   "name": "Lounge",
+   "role": "normal",
+   "heat_source": "episodic",
+   "controllable": true
+  },
+  {
+   "id": "kitchen",
+   "name": "Kitchen",
+   "role": "normal",
+   "heat_source": "continuous",
+   "controllable": true
+  },
+  {
+   "id": "toilet",
+   "name": "Toilet",
+   "role": "internal_sensor_only",
+   "heat_source": null,
+   "controllable": true
+  },
+  {
+   "id": "stairs",
+   "name": "Stairs",
+   "role": "passive",
+   "heat_source": null,
+   "controllable": false
+  }
+ ],
+ "boiler": {
+  "min_burn_s": 480.0,
+  "min_off_s": 600.0,
+  "max_starts_per_hour": 3
+ },
+ "people": [
+  {
+   "id": "early_riser",
+   "name": "Early riser",
+   "ha_person": null
+  },
+  {
+   "id": "home_worker",
+   "name": "Home worker",
+   "ha_person": "person.home_worker"
+  }
+ ],
+ "household": {
+  "timing": {
+   "preheat_min": 30,
+   "live_preheat": "optimum_start",
+   "getting_up_min": 30,
+   "bedtime_min": 30,
+   "merge_gap_min": 30
+  },
+  "away": {
+   "presence_delay_min": 60,
+   "presence_stale_after_min": 60,
+   "return_warmup_min": 180,
+   "everyone_away": "frost"
+  },
+  "temperatures": {
+   "in_use": 19.0,
+   "occasional": 16.0,
+   "unused": 14.0,
+   "night": 14.0
+  },
+  "weekend_days": [
+   "saturday",
+   "sunday"
+  ],
+  "people": [
+   {
+    "id": "early_riser",
+    "name": "Early riser",
+    "weekdays": {
+     "up": "06:30",
+     "bed": "22:30",
+     "out": [
+      "07:30-18:00"
+     ],
+     "work": []
+    },
+    "weekend": {
+     "up": "08:30",
+     "bed": "22:30",
+     "out": [
+      "10:00-18:00"
+     ],
+     "work": []
+    },
+    "getting_up_min": 30,
+    "bedtime_min": 30,
+    "weekend_days": [
+     "saturday",
+     "sunday"
+    ],
+    "ha_person": null,
+    "inherited": [
+     "getting_up_min",
+     "bedtime_min",
+     "weekend_days"
+    ]
+   },
+   {
+    "id": "home_worker",
+    "name": "Home worker",
+    "weekdays": {
+     "up": "08:00",
+     "bed": "22:30",
+     "out": [],
+     "work": [
+      "08:00-18:00"
+     ]
+    },
+    "weekend": {
+     "up": "08:30",
+     "bed": "22:30",
+     "out": [
+      "10:00-18:00"
+     ],
+     "work": []
+    },
+    "getting_up_min": 30,
+    "bedtime_min": 30,
+    "weekend_days": [
+     "saturday",
+     "sunday"
+    ],
+    "ha_person": "person.home_worker",
+    "inherited": [
+     "getting_up_min",
+     "bedtime_min",
+     "weekend_days"
+    ]
+   }
+  ],
+  "rooms": [
+   {
+    "id": "bedroom_1",
+    "name": "Bedroom 1",
+    "use": {
+     "weekdays": "in_use",
+     "weekend": "in_use"
+    },
+    "kind": "bedroom",
+    "people": [
+     "early_riser",
+     "home_worker"
+    ],
+    "temperature": {
+     "weekdays": 19.0,
+     "weekend": 19.0
+    },
+    "night_temperature": 14.0,
+    "unused_temperature": 14.0,
+    "preheat_min": 30,
+    "inherited": [
+     "temperature",
+     "night_temperature",
+     "unused_temperature",
+     "preheat_min"
+    ]
+   },
+   {
+    "id": "bedroom_3",
+    "name": "Bedroom 3",
+    "use": {
+     "weekdays": "in_use",
+     "weekend": "in_use"
+    },
+    "kind": "office",
+    "people": [
+     "home_worker"
+    ],
+    "temperature": {
+     "weekdays": 19.0,
+     "weekend": 19.0
+    },
+    "night_temperature": 14.0,
+    "unused_temperature": 14.0,
+    "preheat_min": 30,
+    "inherited": [
+     "temperature",
+     "night_temperature",
+     "unused_temperature",
+     "preheat_min"
+    ]
+   },
+   {
+    "id": "dining",
+    "name": "Dining room",
+    "use": {
+     "weekdays": "in_use",
+     "weekend": "in_use"
+    },
+    "kind": "shared",
+    "people": null,
+    "temperature": {
+     "weekdays": 19.0,
+     "weekend": 19.0
+    },
+    "night_temperature": 14.0,
+    "unused_temperature": 14.0,
+    "preheat_min": 30,
+    "inherited": [
+     "temperature",
+     "night_temperature",
+     "unused_temperature",
+     "preheat_min"
+    ]
+   },
+   {
+    "id": "kitchen",
+    "name": "Kitchen",
+    "use": {
+     "weekdays": "in_use",
+     "weekend": "in_use"
+    },
+    "kind": "shared",
+    "people": null,
+    "temperature": {
+     "weekdays": 19.0,
+     "weekend": 19.0
+    },
+    "night_temperature": 14.0,
+    "unused_temperature": 14.0,
+    "preheat_min": 30,
+    "inherited": [
+     "temperature",
+     "night_temperature",
+     "unused_temperature",
+     "preheat_min"
+    ]
+   },
+   {
+    "id": "bathroom",
+    "name": "Bathroom",
+    "use": {
+     "weekdays": "occasional",
+     "weekend": "occasional"
+    },
+    "kind": "shared",
+    "people": null,
+    "temperature": {
+     "weekdays": 16.0,
+     "weekend": 16.0
+    },
+    "night_temperature": 14.0,
+    "unused_temperature": 14.0,
+    "preheat_min": 30,
+    "inherited": [
+     "temperature",
+     "night_temperature",
+     "unused_temperature",
+     "preheat_min"
+    ]
+   },
+   {
+    "id": "bedroom_2",
+    "name": "Bedroom 2",
+    "use": {
+     "weekdays": "unused",
+     "weekend": "unused"
+    },
+    "kind": "shared",
+    "people": null,
+    "temperature": {
+     "weekdays": 14.0,
+     "weekend": 14.0
+    },
+    "night_temperature": 14.0,
+    "unused_temperature": 14.0,
+    "preheat_min": 30,
+    "inherited": [
+     "temperature",
+     "night_temperature",
+     "unused_temperature",
+     "preheat_min"
+    ]
+   },
+   {
+    "id": "lounge",
+    "name": "Lounge",
+    "use": {
+     "weekdays": "unused",
+     "weekend": "unused"
+    },
+    "kind": "shared",
+    "people": null,
+    "temperature": {
+     "weekdays": 14.0,
+     "weekend": 14.0
+    },
+    "night_temperature": 14.0,
+    "unused_temperature": 14.0,
+    "preheat_min": 30,
+    "inherited": [
+     "temperature",
+     "night_temperature",
+     "unused_temperature",
+     "preheat_min"
+    ]
+   },
+   {
+    "id": "toilet",
+    "name": "Toilet",
+    "use": {
+     "weekdays": "unused",
+     "weekend": "occasional"
+    },
+    "kind": "all_day",
+    "people": null,
+    "temperature": {
+     "weekdays": 15.0,
+     "weekend": 15.0
+    },
+    "night_temperature": 14.0,
+    "unused_temperature": 14.0,
+    "preheat_min": 30,
+    "inherited": [
+     "night_temperature",
+     "unused_temperature",
+     "preheat_min"
+    ]
+   }
+  ],
+  "limits": {
+   "timing.preheat_min": {
+    "min": 0,
+    "max": 180,
+    "unit": "min"
+   },
+   "timing.getting_up_min": {
+    "min": 0,
+    "max": 180,
+    "unit": "min"
+   },
+   "timing.bedtime_min": {
+    "min": 0,
+    "max": 180,
+    "unit": "min"
+   },
+   "timing.merge_gap_min": {
+    "min": 0,
+    "max": 120,
+    "unit": "min"
+   },
+   "away.presence_delay_min": {
+    "min": 0,
+    "max": 720,
+    "unit": "min"
+   },
+   "away.presence_stale_after_min": {
+    "min": 20,
+    "max": 1440,
+    "unit": "min",
+    "off": 0
+   },
+   "away.return_warmup_min": {
+    "min": 0,
+    "max": 360,
+    "unit": "min"
+   },
+   "temperatures": {
+    "min": 4.0,
+    "max": 35.0,
+    "unit": "\u00b0C",
+    "step": 0.5
+   }
+  },
+  "options": {
+   "timing.live_preheat": [
+    "optimum_start",
+    "fixed"
+   ],
+   "away.everyone_away": [
+    "frost",
+    "unused"
+   ],
+   "weekend_days": [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday"
+   ],
+   "rooms.use": [
+    "in_use",
+    "occasional",
+    "unused"
+   ],
+   "rooms.kind": [
+    "shared",
+    "bedroom",
+    "office",
+    "while_home",
+    "all_day"
+   ]
+  },
+  "damp_below_c": 12.0
+ }
+}
