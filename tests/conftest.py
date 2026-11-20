@@ -1,8 +1,7 @@
-"""Home Assistant integration tests. Run with the HA test harness:
+"""Home Assistant integration tests, run with the Home Assistant test harness.
 
-.venv-ha/bin/pytest tests/ha
-
-The fixtures are `house()` and `describe()` from the demo runtime after about two days,
+The fixtures come from `scripts/ha_fixtures.py` in the radiate repository: the
+`/api/v1/house` and `/api/v1/state` responses of the demo runtime after about two days,
 with a nozzle rating, an override on Bedroom 1 and the Lounge fire switch on.
 """
 

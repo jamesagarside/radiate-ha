@@ -18,7 +18,7 @@ from custom_components.radiate.select import DEMAND_MODES
 
 from .conftest import URL, mock_server, posts, setup_integration
 
-INTEGRATION = Path(__file__).parents[2] / "custom_components" / DOMAIN
+INTEGRATION = Path(__file__).parents[1] / "custom_components" / DOMAIN
 
 HOUSE_SENSORS = {
     "sensor.radiate_burner_hours_today": "burner_hours_today",
