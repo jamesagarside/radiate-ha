@@ -1,6 +1,9 @@
 {
   "domain": "radiate",
   "name": "Radiate",
+  "categories": [
+    "climate.thermostats_heating"
+  ],
   "codeowners": [
     "@jamesagarside"
   ],
