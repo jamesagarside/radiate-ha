@@ -225,6 +225,60 @@ async def test_presence_heartbeat_every_15_minutes(
     }
 
 
+async def test_presence_carries_what_the_trackers_say(
+    hass: HomeAssistant, aioclient_mock, household_house, household_state
+):
+    mock_people(aioclient_mock, household_house, household_state)
+    hass.states.async_set(
+        "device_tracker.phone", "not_home", {"source_type": "gps", "battery_level": 64}
+    )
+    hass.states.async_set("device_tracker.wifi", "not_home", {"source_type": "router"})
+    trackers = ["device_tracker.phone", "device_tracker.wifi"]
+    hass.states.async_set(
+        "person.alex",
+        "not_home",
+        {"device_trackers": trackers, "source": "device_tracker.phone"},
+    )
+    await setup_with(hass, household_house, {CONF_PEOPLE: {"early_riser": "person.alex"}})
+    (sent,) = presence_posts(aioclient_mock)
+    newest = hass.states.get("device_tracker.wifi").last_reported
+    assert sent[1]["evidence_at"] == newest.isoformat()
+    assert sent[1]["source_type"] == "gps"  # the tracker the person follows
+    assert sent[1]["battery"] == 64
+
+    # The phone goes flat: its person stays not home and nothing reports. The heartbeat
+    # repeats the state, with the trackers' last report unchanged, so the server can
+    # tell the evidence is old.
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=15, seconds=1))
+    await hass.async_block_till_done()
+    beat = presence_posts(aioclient_mock)[-1][1]
+    assert beat["state"] == "not_home" and beat["evidence_at"] == newest.isoformat()
+
+
+async def test_presence_without_trackers_sends_what_it_always_did(
+    hass: HomeAssistant, aioclient_mock, household_house, household_state
+):
+    mock_people(aioclient_mock, household_house, household_state)
+    hass.states.async_set("person.alex", "home", {"device_trackers": ["device_tracker.gone"]})
+    await setup_with(hass, household_house, {CONF_PEOPLE: {"early_riser": "person.alex"}})
+    (sent,) = presence_posts(aioclient_mock)
+    assert set(sent[1]) == {"state", "since"}
+
+
+async def test_away_entity_shows_why_presence_counts_as_home(
+    hass: HomeAssistant, aioclient_mock, household_house, household_state
+):
+    why = "No report from their phone or tracker since 10:17, so counted as home."
+    presence = {"state": "not_home", "since": "2026-11-18T10:17+00:00", "stale": False}
+    presence |= {"uncertain": "evidence_old", "why": why}
+    people = [person("early_riser", presence=presence), person("home_worker")]
+    state = {**household_state, "away": {**household_state["away"], "people": people}}
+    mock_people(aioclient_mock, household_house, state)
+    await setup_with(hass, household_house)
+    early = hass.states.get("binary_sensor.radiate_early_riser_away")
+    assert early.state == STATE_OFF and early.attributes["presence_why"] == why
+
+
 async def test_unmapped_people_have_their_presence_forgotten(
     hass: HomeAssistant, aioclient_mock, household_house, household_state
 ):

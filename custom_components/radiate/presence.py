@@ -6,7 +6,11 @@ wins; otherwise the server's is used. This module reports the linked entities' s
 to the server as they change: `home` is home, any other state (`not_home` or a zone
 name) is not home, and `unknown` or `unavailable` are not reported, so they never count
 as away. Every 15 minutes it reports each known state again (a heartbeat), so the server
-can treat presence that stops arriving as unknown.
+can treat presence that stops arriving as unknown. Each report also carries what the
+person's trackers say (`tracker_evidence`): when they last reported, their kind and the
+phone's battery. The server counts a `not_home` whose trackers have gone quiet as home,
+so a phone with a flat battery can't hold the house cold. A server that doesn't know
+these fields ignores them.
 
 At setup and with each heartbeat it also tells the server which `person` entities exist,
 so the setup wizard can offer them, and reloads the entry when the server's people or
@@ -53,6 +57,45 @@ def presence_of(state: State | None) -> str | None:
     if state is None or state.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
         return None
     return "home" if state.state == STATE_HOME else "not_home"
+
+
+def tracker_evidence(hass: HomeAssistant, person: State | None) -> dict[str, Any]:
+    """What the person's own trackers say, for the server's fail warm rules.
+
+    `evidence_at`: the newest report (`last_reported`, whatever the state) across the
+    `device_tracker` entities in the person's `device_trackers` attribute. A dead phone
+    stops reporting, though its `person` keeps its last state. `source_type`: `gps`,
+    `router`, `bluetooth` or `bluetooth_le`, from the tracker the person follows now
+    (its `source` attribute) or else the newest. `battery`: `battery_level` from that
+    tracker or, failing that, any of them (the Companion app sets it). Only what is
+    known is returned, so a person without trackers sends what it always did.
+    """
+    if person is None:
+        return {}
+    trackers = []
+    for entity_id in person.attributes.get("device_trackers") or ():
+        state = hass.states.get(entity_id)
+        if state is not None:
+            trackers.append(state)
+    if not trackers:
+        return {}
+
+    def reported(state: State) -> datetime:
+        return getattr(state, "last_reported", None) or state.last_updated
+
+    newest = max(trackers, key=reported)
+    source = person.attributes.get("source")
+    main = next((t for t in trackers if t.entity_id == source), newest)
+    out: dict[str, Any] = {"evidence_at": reported(newest).isoformat()}
+    kind = main.attributes.get("source_type")
+    if isinstance(kind, str) and kind:
+        out["source_type"] = kind.lower()
+    for tracker in (main, *trackers):
+        level = tracker.attributes.get("battery_level")
+        if isinstance(level, (int, float)) and not isinstance(level, bool) and 0 <= level <= 100:
+            out["battery"] = level
+            break
+    return out
 
 
 def people(entry) -> list[dict]:
@@ -102,11 +145,15 @@ async def async_setup_presence(hass: HomeAssistant, entry) -> None:
     await _report_persons(hass, data.client)
 
     async def report(
-        person_id: str, state: str | None, since: datetime | None, refresh: bool = True
+        person_id: str,
+        state: str | None,
+        since: datetime | None,
+        refresh: bool = True,
+        evidence: dict[str, Any] | None = None,
     ) -> None:
         try:
             await data.client.report_presence(
-                person_id, state, since.isoformat() if since else None
+                person_id, state, since.isoformat() if since else None, **(evidence or {})
             )
         except RadiateError as err:
             _LOGGER.warning("Radiate: could not report presence for %s: %s", person_id, err)
@@ -122,7 +169,7 @@ async def async_setup_presence(hass: HomeAssistant, entry) -> None:
         state = hass.states.get(entity_id)
         value = presence_of(state)
         if value is not None:
-            await report(pid, value, state.last_changed)
+            await report(pid, value, state.last_changed, evidence=tracker_evidence(hass, state))
 
     by_entity: dict[str, list[str]] = {}
     for pid, entity_id in chosen.items():
@@ -134,20 +181,23 @@ async def async_setup_presence(hass: HomeAssistant, entry) -> None:
         value = presence_of(new)
         if value is None or value == presence_of(event.data["old_state"]):
             return  # unknown, or a move between zones: still not home since earlier
+        evidence = tracker_evidence(hass, new)
         for pid in by_entity.get(event.data["entity_id"], []):
-            entry.async_create_task(hass, report(pid, value, new.last_changed))
+            entry.async_create_task(hass, report(pid, value, new.last_changed, evidence=evidence))
 
     if by_entity:
         entry.async_on_unload(async_track_state_change_event(hass, list(by_entity), changed))
 
     async def heartbeat(_now: datetime) -> None:
-        # The same state and change time again: nothing changes on the server except
-        # that the presence is fresh. Unknown states are still not sent.
+        # The same state and change time again, so the presence is fresh, with the
+        # trackers' newest report: a phone that has stopped reporting shows here, as its
+        # `person` keeps the last state. Unknown states are still not sent.
         for pid, entity_id in chosen.items():
             state = hass.states.get(entity_id)
             value = presence_of(state)
             if value is not None:
-                await report(pid, value, state.last_changed, refresh=False)
+                evidence = tracker_evidence(hass, state)
+                await report(pid, value, state.last_changed, refresh=False, evidence=evidence)
         await _report_persons(hass, data.client)
         # People or links changed in Radiate's setup wizard: set up again with them.
         try:
@@ -248,4 +298,7 @@ class PersonAway(RadiateEntity, BinarySensorEntity):
             "presence_since": presence.get("since"),
             # Not reported for the server's stale limit: treated as unknown, not away.
             "presence_stale": presence.get("stale"),
+            # Why the server counts a not home as home (fail warm), in words, or None.
+            # An older server doesn't send it.
+            "presence_why": presence.get("why"),
         }

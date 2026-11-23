@@ -92,12 +92,29 @@ class RadiateClient:
         await self._request("POST", f"people/{person_id}/away", {"until": until})
 
     async def report_presence(
-        self, person_id: str, state: str | None, since: str | None = None
+        self,
+        person_id: str,
+        state: str | None,
+        since: str | None = None,
+        evidence_at: str | None = None,
+        source_type: str | None = None,
+        battery: float | None = None,
     ) -> None:
-        """Presence from a `person` entity: `home`, `not_home`, or `None` to forget it."""
+        """Presence from a `person` entity: `home`, `not_home`, or `None` to forget it.
+
+        `evidence_at`, `source_type` and `battery` are what its trackers say, for the
+        server's fail warm rules; each is sent only when known.
+        """
         body: dict[str, Any] = {"state": state}
         if since is not None:
             body["since"] = since
+        for key, value in (
+            ("evidence_at", evidence_at),
+            ("source_type", source_type),
+            ("battery", battery),
+        ):
+            if value is not None:
+                body[key] = value
         await self._request("POST", f"people/{person_id}/presence", body)
 
     async def report_ha_persons(self, persons: list[dict[str, str]]) -> None:
