@@ -6,6 +6,8 @@ CONF_TOKEN = "token"
 DEFAULT_URL = "http://localhost:8099"
 SCAN_INTERVAL_S = 30
 CONF_PEOPLE = "people"  # options: Radiate person id to person entity id
-# Presence is reported again this often, so the server can tell a quiet Home
-# Assistant from a person who is still out (its presence_stale_after_min).
+CONF_OUTDOOR = "outdoor_entity"  # options: weather or temperature sensor entity, or absent
+# Presence and the outdoor temperature are reported again this often, so the server
+# can tell a quiet Home Assistant from a person who is still out (its
+# presence_stale_after_min) and keep an outdoor reading that hasn't changed fresh.
 PRESENCE_HEARTBEAT_MIN = 15

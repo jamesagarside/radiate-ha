@@ -19,6 +19,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import RadiateAuthError, RadiateClient, RadiateConnectionError, RadiateError
 from .const import CONF_TOKEN, CONF_URL, DOMAIN
 from .coordinator import RadiateCoordinator
+from .outdoor import async_setup_outdoor
 from .presence import async_register_away_services, async_setup_presence
 
 PLATFORMS = [
@@ -57,6 +58,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: RadiateConfigEntry) -> b
     _register_services(hass)
     async_register_away_services(hass, lambda: _entries(hass))
     await async_setup_presence(hass, entry)
+    await async_setup_outdoor(hass, entry)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 

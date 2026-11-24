@@ -24,6 +24,7 @@ POST_PATHS = (
     "mode",
     "settings",
     "ha/persons",
+    "outdoor",
 )
 
 
