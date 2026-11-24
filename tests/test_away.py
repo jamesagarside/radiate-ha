@@ -148,7 +148,7 @@ async def test_options_flow_maps_people(
     entry = await setup_with(hass, household_house)
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM
-    assert set(result["data_schema"].schema) == {"early_riser", "home_worker"}
+    assert set(result["data_schema"].schema) == {"early_riser", "home_worker", "outdoor_entity"}
     assert "early_riser (Early riser)" in result["description_placeholders"]["people"]
     hass.states.async_set("person.alex", "home")
     result = await hass.config_entries.options.async_configure(
@@ -162,11 +162,14 @@ async def test_options_flow_maps_people(
     assert sent == [("people/early_riser/presence", "home")]
 
 
-async def test_options_flow_without_people(hass: HomeAssistant, radiate_api, house):
+async def test_options_flow_without_people_offers_the_outdoor_entity(
+    hass: HomeAssistant, radiate_api, house
+):
     entry = await setup_integration(hass, house)
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "no_people"
+    assert result["type"] is FlowResultType.FORM
+    assert set(result["data_schema"].schema) == {"outdoor_entity"}
+    assert result["description_placeholders"]["people"] == "none yet"
 
 
 async def test_presence_reported_on_setup_and_on_change(

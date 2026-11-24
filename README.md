@@ -70,6 +70,22 @@ A link in the integration's options takes priority. Leave a person empty there t
 
 The integration reports each linked person's state to the server when it changes, and again every 15 minutes so the server knows Home Assistant is still reporting. `home` counts as home and any other state, such as `not_home` or a zone name, counts as not home. `unknown` and `unavailable` aren't reported, so they never make anyone away. The server decides when not home counts as away, after its presence delay. Each report also says when the person's device trackers last reported, what kind they are (GPS, router or Bluetooth) and the phone's battery, where Home Assistant knows. A phone with a flat battery keeps its person at not home, so the server uses this to count a not home whose trackers have gone quiet as home, and to wait longer before a router or Bluetooth tracker counts as away. Servers that don't know these fields ignore them. If you remove a person's link, the integration tells the server to forget that person's presence.
 
+## Outdoor temperature
+
+Radiate uses the outdoor temperature to work out heat loss and to compare like with like in its savings report. If you don't have a Zigbee outdoor sensor, Home Assistant can send it one:
+
+1. Go to **Settings** > **Devices & services** > **Radiate** > **Configure**, and pick an entity under **Outdoor temperature**: a weather entity, such as `weather.forecast_home` from the Met.no integration, or a temperature sensor outside. It's empty by default, so nothing is sent.
+2. In Radiate's house file, set `house.outdoor_source` to `home_assistant`, or to `both` to prefer a Zigbee sensor and fall back to Home Assistant. See [configuration](https://github.com/jamesagarside/radiate/blob/main/docs/configuration.md#house).
+
+```yaml
+house:
+  outdoor_source: home_assistant
+```
+
+For a weather entity the integration reads its `temperature` attribute, and for a sensor its state, converted to °C. It sends the reading when it changes and again every 15 minutes, with the time the entity last reported, so Radiate can tell a reading that has stopped updating from one that's just steady. `unknown` and `unavailable` aren't sent. Radiate ignores a reading older than `house.outdoor_stale_after_min` (3 hours by default) and then assumes 5 °C, as it does with no outdoor sensor, and shows the alert `outdoor.stale`. If you clear the entity, the integration tells Radiate to forget its last reading.
+
+The Outdoor temperature sensor (`sensor.radiate_outdoor_temperature`) shows the temperature Radiate is using, whichever source it came from.
+
 ## Services
 
 - `radiate.boost_store`: `minutes`, 0 to 180, default 60.

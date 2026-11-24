@@ -117,6 +117,21 @@ class RadiateClient:
                 body[key] = value
         await self._request("POST", f"people/{person_id}/presence", body)
 
+    async def report_outdoor(
+        self, temperature_c: float | None, measured_at: str | None = None, source: str | None = None
+    ) -> None:
+        """An outdoor temperature in °C; `None` forgets it.
+
+        `measured_at` is when it was measured (ISO 8601) and `source` the entity it came
+        from. The server uses it only when its `house.outdoor_source` says so.
+        """
+        body: dict[str, Any] = {"temperature_c": temperature_c}
+        if measured_at is not None:
+            body["measured_at"] = measured_at
+        if source is not None:
+            body["source"] = source
+        await self._request("POST", "outdoor", body)
+
     async def report_ha_persons(self, persons: list[dict[str, str]]) -> None:
         """The `person` entities Home Assistant has, `[{"entity_id", "name"}]`.
 
