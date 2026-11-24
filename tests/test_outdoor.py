@@ -116,6 +116,20 @@ async def test_heartbeat_every_15_minutes_with_last_reported(
     assert sent[1]["measured_at"] != sent[0]["measured_at"]
 
 
+def test_measured_at_is_last_reported_and_last_updated_only_without_it():
+    from custom_components.radiate.outdoor import measured_at
+
+    state = State(GARDEN, "3.0")
+    reported = state.last_updated + timedelta(minutes=20)
+    state = State(GARDEN, "3.0", last_updated=state.last_updated, last_reported=reported)
+    assert measured_at(state) == reported != state.last_updated
+
+    class OlderState:  # Home Assistant before 2024.3 had no last_reported
+        last_updated = state.last_updated
+
+    assert measured_at(OlderState()) == state.last_updated
+
+
 async def test_cleared_option_forgets_a_reading_an_entity_posted(
     hass: HomeAssistant, aioclient_mock, house, state
 ):
