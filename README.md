@@ -57,7 +57,7 @@ For the house:
 
 For each person in the server's household (the `household` section of the house file, or the household set up in Radiate's web UI):
 
-- An away binary sensor, for example `binary_sensor.radiate_early_riser_away`. It's on while Radiate counts the person as away. Its attributes give the `person` entity linked to them (`person_entity`), the reason (`away_until` or `presence`), when they're due back (`away_until`), the presence Radiate last had (`presence`, `presence_since`) and whether it has gone stale (`presence_stale`).
+- An away binary sensor, for example `binary_sensor.radiate_early_riser_away`. It's on while Radiate counts the person as away. Its attributes give the `person` entity linked to them (`person_entity`), the reason (`away_until` or `presence`), when they're due back (`away_until`), the presence Radiate last had (`presence`, `presence_since`) whether it has gone stale (`presence_stale`), and why Radiate counts a not home as home, if it does (`presence_why`).
 
 ### Presence
 
@@ -68,7 +68,7 @@ To let Home Assistant presence drive away, link each Radiate person to a `person
 
 A link in the integration's options takes priority. Leave a person empty there to use the link from Radiate's setup. The integration checks Radiate's people every 15 minutes and reloads when they or their links change.
 
-The integration reports each linked person's state to the server when it changes, and again every 15 minutes so the server knows Home Assistant is still reporting. `home` counts as home and any other state, such as `not_home` or a zone name, counts as not home. `unknown` and `unavailable` aren't reported, so they never make anyone away. The server decides when not home counts as away, after its presence delay. If you remove a person's link, the integration tells the server to forget that person's presence.
+The integration reports each linked person's state to the server when it changes, and again every 15 minutes so the server knows Home Assistant is still reporting. `home` counts as home and any other state, such as `not_home` or a zone name, counts as not home. `unknown` and `unavailable` aren't reported, so they never make anyone away. The server decides when not home counts as away, after its presence delay. Each report also says when the person's device trackers last reported, what kind they are (GPS, router or Bluetooth) and the phone's battery, where Home Assistant knows. A phone with a flat battery keeps its person at not home, so the server uses this to count a not home whose trackers have gone quiet as home, and to wait longer before a router or Bluetooth tracker counts as away. Servers that don't know these fields ignore them. If you remove a person's link, the integration tells the server to forget that person's presence.
 
 ## Services
 
