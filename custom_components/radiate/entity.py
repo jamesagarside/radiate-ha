@@ -34,7 +34,7 @@ class RadiateEntity(CoordinatorEntity[RadiateCoordinator]):
                 name=room["name"],
                 manufacturer="Radiate",
                 model="Room",
-                via_device=(DOMAIN, house_id),
+                via_device_id=coordinator.house_device_id,
             )
         else:
             self._attr_device_info = house_device(coordinator)

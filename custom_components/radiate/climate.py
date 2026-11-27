@@ -62,7 +62,7 @@ async def async_setup_entry(
 class RadiateClimate(RadiateEntity, ClimateEntity):
     _attr_name = None
     _attr_translation_key = "room"
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.AUTO]
     _attr_hvac_mode = HVACMode.AUTO
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
@@ -74,11 +74,11 @@ class RadiateClimate(RadiateEntity, ClimateEntity):
         super().__init__(coordinator, "climate", room)
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         return self.room.get("temperature")
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         return self.room.get("target")
 
     @property

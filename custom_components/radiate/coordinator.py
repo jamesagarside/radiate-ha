@@ -29,6 +29,8 @@ class RadiateCoordinator(DataUpdateCoordinator[dict]):
         )
         self.client = client
         self.house = house
+        # The house device's registry id, set at setup, so room devices can link to it
+        self.house_device_id: str | None = None
 
     async def _async_update_data(self) -> dict:
         try:
