@@ -63,7 +63,7 @@ class RadiateConfigFlow(ConfigFlow, domain=DOMAIN):
         token = cfg.get("token", "")
         try:
             house = await self._validate(url, token)
-        except (RadiateConnectionError, RadiateAuthError):
+        except RadiateConnectionError, RadiateAuthError:
             return self.async_abort(reason="cannot_connect")
         await self.async_set_unique_id(house["id"])
         self._abort_if_unique_id_configured(updates={CONF_URL: url, CONF_TOKEN: token})

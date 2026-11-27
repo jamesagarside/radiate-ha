@@ -7,11 +7,12 @@ with a nozzle rating, an override on Bedroom 1 and the Lounge fire switch on, an
 """
 
 import json
+import logging
 from pathlib import Path
 
 import pytest
 from homeassistant.core import HomeAssistant
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.radiate.const import CONF_TOKEN, CONF_URL, DOMAIN
 
@@ -29,8 +30,17 @@ POST_PATHS = (
 
 
 @pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations):
+def no_deprecated_usage(caplog):
+    """Fail a test in which Home Assistant reports Radiate for deprecated API usage."""
     yield
+    reports = [
+        r.getMessage()
+        for r in caplog.get_records("call") + caplog.get_records("setup")
+        if r.levelno >= logging.WARNING
+        and "deprecated" in r.getMessage()
+        and "radiate" in r.getMessage().lower()
+    ]
+    assert not reports, reports
 
 
 @pytest.fixture
