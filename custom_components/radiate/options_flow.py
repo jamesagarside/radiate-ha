@@ -67,7 +67,7 @@ class RadiateOptionsFlow(OptionsFlow):
         )
         try:
             house = await client.house()
-        except (RadiateConnectionError, RadiateAuthError):
+        except RadiateConnectionError, RadiateAuthError:
             return self.async_abort(reason="cannot_connect")
         self._people = house.get("people") or []
 

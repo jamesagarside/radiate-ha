@@ -58,7 +58,7 @@ def outdoor_temperature(state: State | None) -> float | None:
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
     try:
         value = float(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
     if not math.isfinite(value):
         return None

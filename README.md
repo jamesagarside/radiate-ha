@@ -10,7 +10,7 @@ The integration is a thin client of the server's API and contains no control log
 
 You need:
 
-- Home Assistant 2025.2 or later, with [HACS](https://hacs.xyz/).
+- Home Assistant 2026.11 or later, with [HACS](https://hacs.xyz/).
 - A running Radiate server, either the Radiate App in Home Assistant or a standalone server. See [deployment](https://github.com/jamesagarside/radiate/blob/main/docs/deployment.md) in the Radiate repository.
 
 HACS doesn't install the Radiate server. It only installs this integration.
@@ -97,10 +97,10 @@ The Outdoor temperature sensor (`sensor.radiate_outdoor_temperature`) shows the 
 
 ## Development
 
-The tests use `pytest-homeassistant-custom-component`, which pins its own Home Assistant version:
+The tests use Home Assistant's `pytest-homeassistant` package. `requirements_test.txt` pins the release that matches the Home Assistant version under test. A test fails if Home Assistant reports Radiate for deprecated API usage.
 
 ```sh
-uv venv --python 3.13
+uv venv --python 3.14
 uv pip install -r requirements_test.txt
 .venv/bin/pytest
 .venv/bin/ruff check custom_components tests

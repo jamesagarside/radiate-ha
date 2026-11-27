@@ -14,11 +14,13 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import RadiateAuthError, RadiateClient, RadiateConnectionError, RadiateError
 from .const import CONF_TOKEN, CONF_URL, DOMAIN
 from .coordinator import RadiateCoordinator
+from .entity import house_device
 from .outdoor import async_setup_outdoor
 from .presence import async_register_away_services, async_setup_presence
 
@@ -53,6 +55,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: RadiateConfigEntry) -> b
 
     coordinator = RadiateCoordinator(hass, entry, client, house)
     await coordinator.async_config_entry_first_refresh()
+    coordinator.house_device_id = (
+        dr.async_get(hass)
+        .async_get_or_create_from_info(
+            config_entry_id=entry.entry_id, device_info=house_device(coordinator)
+        )
+        .id
+    )
     entry.runtime_data = RadiateData(client, coordinator)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     _register_services(hass)
