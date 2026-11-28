@@ -51,7 +51,13 @@
       "store_boost": { "name": "Hot-water boost" },
       "fire": { "name": "Fire detected" },
       "valve_untrusted": { "name": "Stuck valve" },
-      "away": { "name": "{person} away" }
+      "away": {
+        "name": "{person} away",
+        "state": {
+          "off": "Home",
+          "on": "Away"
+        }
+      }
     },
     "climate": {
       "room": { "name": "Heating" }
