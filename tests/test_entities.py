@@ -386,3 +386,10 @@ async def test_keys_that_disappear_make_entities_unavailable(
             assert hass.states.get(entity_id).state == STATE_UNAVAILABLE, entity_id
     assert hass.states.get("binary_sensor.bedroom_1_stuck_valve").state == STATE_UNAVAILABLE
     assert hass.states.get("sensor.radiate_alerts").state == "0"
+
+
+def test_away_sensor_reads_home_or_away():
+    strings = json.loads((INTEGRATION / "strings.json").read_text())
+    icons = json.loads((INTEGRATION / "icons.json").read_text())
+    assert strings["entity"]["binary_sensor"]["away"]["state"] == {"off": "Home", "on": "Away"}
+    assert set(icons["entity"]["binary_sensor"]["away"]["state"]) == {"on"}

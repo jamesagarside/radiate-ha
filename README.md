@@ -57,7 +57,7 @@ For the house:
 
 For each person in the server's household (the `household` section of the house file, or the household set up in Radiate's web UI):
 
-- An away binary sensor, for example `binary_sensor.radiate_early_riser_away`. It's on while Radiate counts the person as away. Its attributes give the `person` entity linked to them (`person_entity`), the reason (`away_until` or `presence`), when they're due back (`away_until`), the presence Radiate last had (`presence`, `presence_since`) whether it has gone stale (`presence_stale`), and why Radiate counts a not home as home, if it does (`presence_why`).
+- An away binary sensor, for example `binary_sensor.radiate_early_riser_away`. It's on while Radiate counts the person as away, and Home Assistant shows it as Away or Home. Its attributes give the `person` entity linked to them (`person_entity`), the reason (`away_until` or `presence`), when they're due back (`away_until`), the presence Radiate last had (`presence`, `presence_since`) whether it has gone stale (`presence_stale`), and why Radiate counts a not home as home, if it does (`presence_why`).
 
 ### Presence
 
